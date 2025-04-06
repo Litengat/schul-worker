@@ -10,7 +10,7 @@
  *
  * Learn more at https://developers.cloudflare.com/workers/
  */
-import ical, { ICalAttendeeData, ICalCategory, ICalEventClass } from 'ical-generator';
+import ical, { ICalAttendeeData, ICalCategory, ICalEventClass, ICalEventStatus } from 'ical-generator';
 import fetchLogin from './login';
 import moment from 'moment';
 import fetchTimes, { TimeSchema } from './times';
@@ -74,6 +74,12 @@ export default {
 				},
 				location: formatRoom(lesson),
 				categories: [category],
+				status:
+					lesson.type === 'changedLesson'
+						? ICalEventStatus.TENTATIVE
+						: lesson.type === 'cancelledLesson'
+						? ICalEventStatus.CANCELLED
+						: ICalEventStatus.CONFIRMED,
 			});
 		});
 
