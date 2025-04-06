@@ -60,6 +60,9 @@ export default {
 		Timetable.results[0].data.forEach((lesson) => {
 			const startTime = moment(lesson.date).startOf('day').add(Timemap.get(lesson.classHour.id)?.from, 'minutes');
 			const endTime = moment(lesson.date).startOf('day').add(Timemap.get(lesson.classHour.id)?.until, 'minutes');
+			console.log('Start Time:', startTime.toDate());
+			console.log('End Time:', endTime.toDate());
+
 			if (changes === true && lesson.type !== 'changedLesson') return;
 			if (changes === false && lesson.type === 'changedLesson') return;
 			calendar.createEvent({
@@ -67,6 +70,7 @@ export default {
 				end: endTime.toDate(),
 				summary: (lesson.type === 'changedLesson' ? '(Changed) ' : '') + formatSubject(lesson),
 				attendees: formatTeachers(lesson),
+				timezone: 'Europe/Berlin',
 				organizer: {
 					email: `${lesson.actualLesson?.teachers[0].firstname} ${lesson.actualLesson?.teachers[0].lastname}`,
 					name: `${lesson.actualLesson?.teachers[0].firstname} ${lesson.actualLesson?.teachers[0].lastname}`,
