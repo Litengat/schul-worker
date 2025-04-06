@@ -29,6 +29,7 @@ export default {
 		const params = new URL(request.url).searchParams;
 		const username = params.get('username');
 		const password = params.get('password');
+		const changes = parsebool(params.get('changes'));
 		console.log('Username:', username);
 		console.log('Password:', password);
 
@@ -52,21 +53,19 @@ export default {
 		const Timetable = await fetchTimetable(jwt, studentId, start, end);
 		if (!Timetable) return new Response('Failed to fetch lessons', { status: 500 });
 
-		const calendar = ical({ name: 'My Cloudflare Calendar' });
+		const calendar = ical({ name: 'Stundenplan' });
 		const category = new ICalCategory({
 			name: 'Schulmanager',
 		});
 		Timetable.results[0].data.forEach((lesson) => {
 			const startTime = moment(lesson.date).startOf('day').add(Timemap.get(lesson.classHour.id)?.from, 'minutes');
 			const endTime = moment(lesson.date).startOf('day').add(Timemap.get(lesson.classHour.id)?.until, 'minutes');
-
+			if (changes === true && lesson.type !== 'changedLesson') return;
+			if (changes === false && lesson.type === 'changedLesson') return;
 			calendar.createEvent({
 				start: startTime.toDate(),
 				end: endTime.toDate(),
-				class: lesson.type === 'changedLesson' ? ICalEventClass.PRIVATE : ICalEventClass.CONFIDENTIAL,
-				summary:
-					(lesson.type === 'changedLesson' ? '(Changed) ' : lesson.type === 'cancelledLesson' ? '(Cancelled) ' : '') +
-					formatSubject(lesson),
+				summary: (lesson.type === 'changedLesson' ? '(Changed) ' : '') + formatSubject(lesson),
 				attendees: formatTeachers(lesson),
 				organizer: {
 					email: `${lesson.actualLesson?.teachers[0].firstname} ${lesson.actualLesson?.teachers[0].lastname}`,
@@ -149,4 +148,10 @@ function formatRoom(lession: Lession) {
 		return `${originalRooms} -> ${actualRoom}`;
 	}
 	return actualRoom;
+}
+
+function parsebool(string: string | null): boolean | null {
+	if (string === 'true') return true;
+	if (string === 'false') return false;
+	return null;
 }
